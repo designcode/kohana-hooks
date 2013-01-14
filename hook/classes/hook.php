@@ -53,12 +53,16 @@ class Hook {
 	 * Register a new hook
 	 *
 	 * @param 	string		$hook_name		Name of the hook that needs to be registered
-	 * @return  bool
+	 * @param 	callable	$handler		Handler of the hook, must be a valid PHP callback
 	 */
-	static public function register($hook_name)
+	static public function register($hook_name, $handler=FALSE)
 	{
-		// Pushing the event into $events array
-		return array_push(self::$hooks, $hook_name);
+		// Pushing the hook into $hooks array
+		array_push(self::$hooks, $hook_name);
+
+		// If handler was provided, attach it to hook
+		if($handler)
+			self::observe($hook_name, $handler);
 	}
 
 	/**
@@ -96,11 +100,16 @@ class Hook {
 	 * @param 	array		$params			Optional extra parameters, will be passed to $handler when hook is triggered
 	 * @return  array
 	 */
-	static public function trigger($hook_name, &$params=array())
+	static public function trigger($hook_name, $params = FALSE)
 	{
 		$response = array();
 
-		if( ! in_array($hook_name, self::$hooks))
+		if( $params AND ! Arr::is_array($params))
+		{
+			// Throwing exception if the params is not array
+			throw new Kohana_Exception('Second argument "params" must be an array.');
+		}
+		else if( ! in_array($hook_name, self::$hooks))
 		{
 			// Throwing exception if the hook was not registered
 			throw new Kohana_Exception($hook_name.' is not a registered event.');
@@ -110,6 +119,9 @@ class Hook {
 			foreach(self::$handlers[$hook_name] as $handler)
 			{
 				// Calling the handlers that were attached to hooks
+				if( ! $params)
+					$params = array();
+				
 				$response[$hook_name] = call_user_func_array($handler, $params);
 			}
 		}

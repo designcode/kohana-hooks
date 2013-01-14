@@ -2,7 +2,7 @@
 
 return array
 (
-	'my_hook' 	=>	function (&$number) {
+	'my_hook' 	=>	function ($number) {
 		echo Debug::vars($number);
 		$number++;
 	}
